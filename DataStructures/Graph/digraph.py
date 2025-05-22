@@ -23,7 +23,7 @@ def insert_vertex (my_graph, key_u,info_u):
 
     new_vertex = ver.new_vertex(key_u, info_u)
     
-    insert = map.put(my_graph, key_u, new_vertex)
+    insert = map.put(my_graph['vertices'], key_u, new_vertex)
     
     return insert 
 
@@ -90,7 +90,7 @@ def add_edge (my_graph,key_u, key_v, weight=1.0):
 
 def order (my_graph):
     
-    return my_graph["order"]
+    return my_graph["size"]
 
 
 def size (my_graph):
