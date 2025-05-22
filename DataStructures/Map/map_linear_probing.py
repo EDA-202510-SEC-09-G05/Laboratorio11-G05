@@ -21,6 +21,9 @@ def new_map(num_elements,load_factor, prime=109345121):
     for i in range(capacity):
         entry = me.new_map_entry(None,None)
         lt.add_last(hash_table['table'], entry)
+    hash_table['scale'] = 1
+    hash_table['shift'] = 0
+    
         
     return hash_table
 
