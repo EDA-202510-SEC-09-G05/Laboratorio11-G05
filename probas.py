@@ -55,48 +55,105 @@ def add_edge (my_graph,key_u, key_v, weight):
     vertex_u = None
     vertex_v = None
     lista_de_adyacencia_info = my_graph['vertices']['table']['elements']
-    lista_de_adyacencia = my_graph['adjacency_list']['table']['elements']
+    lista_de_adyacencia = my_graph['adjacency_list']['table']['elements'] 
+    
     
     for nodo in lista_de_adyacencia_info:
-        if nodo['key'] == key_u:
+        if nodo is not None and nodo['key'] == key_u: 
             vertex_u = nodo['key']
+            break 
             
     if vertex_u == None:
-        raise Exception("El vertice u no existe")
+        raise Exception("El vertice u no existe") 
     
     for nodo in lista_de_adyacencia_info:
-        if nodo['key'] == key_v:
+        if nodo is not None and nodo['key'] == key_v: 
             vertex_v = nodo['key']
+            break 
             
     if vertex_v == None: 
-        raise Exception("El vertice v no existe")
+        raise Exception("El vertice v no existe") 
     
     adyacencia_u = None
+    
     for nodo in lista_de_adyacencia:
-        if nodo['key'] == key_u:
-            adyacencia_u = nodo["value"]
+        if nodo is not None and nodo['key'] == key_u: 
+            adyacencia_u = nodo["value"] 
+            break 
 
     arco = edg.new_edge(key_v,weight) 
-    if adyacencia_u != None:   
-        map.put(adyacencia_u,key_v,arco)
+    
+    #Esta parte me sirvio para hacer debugging hecha con gemini la verdad pa q digo q no. 
+    # --- MAJOR LOGIC CHANGES START HERE ---
+    if adyacencia_u is not None: # Changed from '!= None' to 'is not None' (Pythonic)
+        # 1. Call map.put on the inner adjacency map (`adyacencia_u`).
+        # This call RETURNS the updated map. If a rehash occurred, it's a NEW map object.
+        updated_adyacencia_u_map_obj = map.put(adyacencia_u, key_v, arco)
+        
+        # 2. Now, take this `updated_adyacencia_u_map_obj` (which might be a new object
+        # if the inner map rehashed) and put it back into the TOP-LEVEL
+        # `my_graph['adjacency_list']` map for the given `key_u`.
+        # This ensures the main graph's adjacency list always references the correct,
+        # up-to-date inner map for vertex `key_u`.
+        # The `map.put` on the top-level map also handles its own potential rehash.
+        my_graph['adjacency_list'] = map.put(my_graph['adjacency_list'], key_u, updated_adyacencia_u_map_obj)
+    # --- MAJOR LOGIC CHANGES END HERE ---
+
     my_graph['num_edges']+=1
     
     return my_graph
     
-a = new_graph(4)
+a = new_graph(6)
 
 
 a = insert_vertex(a,1, {"name": "D"})
 b = insert_vertex(a,2, {"name": "Sofia"})
-b = insert_vertex(a,3, {"name": "uji"})
+b = insert_vertex(a,3, {"name": "Pablo "})
+b = insert_vertex(a,4, {"name": "I"})
+b = insert_vertex(a,5, {"name": "Y"})
+b = insert_vertex(a,6, {"name": "T"})
 c = update_vertex_info(a,2,'a')
 d = add_edge(a,1,2,2.0)
-d = add_edge(a,1,2,3.0)
-d = add_edge(a,2,1,8.0)
-d = add_edge(a,1,3,8.0)
+d = add_edge(a,1,2,4.0) 
+d = add_edge(a,1,3,9.0)
+d = add_edge(a,1,4,2.0)
+d = add_edge(a,1,4,2.0)
+d = add_edge(a,2,4,2.0)
+d = add_edge(a,2,3,2.0)
+d = add_edge(a,4,3,2.0)
 
+lista = map.get(d['adjacency_list'],4)
+nodod_adyacentes_1 = map.key_set(lista)
+print(lista['table']['elements'])
+print(nodod_adyacentes_1)
 
-#print(d)
+'''
+print("\n--- After all add_edge calls ---")
+# Get the adjacency map for vertex 1
+adj_map_for_1 = map.get(d['adjacency_list'], 1)
+
+if adj_map_for_1:
+    print(f"Adjacency map for vertex 1: {adj_map_for_1}")
+    print(f"Size of adjacency map for vertex 1: {map.size(adj_map_for_1)}")
+    
+    # Try to get each specific adjacent vertex
+    edge_to_2 = map.get(adj_map_for_1, 2)
+    edge_to_3 = map.get(adj_map_for_1, 3)
+    edge_to_4 = map.get(adj_map_for_1, 4)
+
+    print(f"Edge to vertex 2: {edge_to_2}")
+    print(f"Edge to vertex 3: {edge_to_3}")
+    print(f"Edge to vertex 4: {edge_to_4}")
+else:
+    print("Adjacency map for vertex 1 not found.")
+
+# You can also inspect the keys of the inner map
+if adj_map_for_1:
+    keys_of_adj_1 = map.key_set(adj_map_for_1)
+    print(f"Keys in adjacency map for vertex 1: {keys_of_adj_1['elements']}") # Assuming key_set returns a list-like object
+
+'''
+
 
 def setup_tests():
     empty_graph = new_graph(0)
@@ -140,7 +197,7 @@ def degree(my_graph,key_u):
     return numero
 
 
-print(some_graph)
+#print(some_graph)
 
 def degree(my_graph,key_u):
     lista_adyacencia_u = map.get(my_graph['vertices'],key_u)
@@ -148,6 +205,7 @@ def degree(my_graph,key_u):
         raise Exception("El vertice no existe")
     numero = lista_adyacencia_u['adjacents']['size']     
     return numero
-z = degree(some_graph,9)
-print(z)
+
+z = degree(some_graph,1)
+#print(z)
 

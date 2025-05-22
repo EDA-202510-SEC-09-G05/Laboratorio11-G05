@@ -240,3 +240,14 @@ def rehash(my_map):
     # nuevo['current_factor'] = nuevo['size'] / nuevo['capacity'] # Ya se calcula en _put_internal
 
     return nuevo
+
+
+
+lista = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,]
+a = new_map(10,0.5)
+
+for i in lista:
+    put(a,i,"joda")
+    
+    
+print(a)

@@ -46,31 +46,50 @@ def add_edge (my_graph,key_u, key_v, weight):
     vertex_u = None
     vertex_v = None
     lista_de_adyacencia_info = my_graph['vertices']['table']['elements']
-    lista_de_adyacencia = my_graph['adjacency_list']['table']['elements']
+    lista_de_adyacencia = my_graph['adjacency_list']['table']['elements'] 
+    
     
     for nodo in lista_de_adyacencia_info:
-        if nodo['key'] == key_u:
+        if nodo is not None and nodo['key'] == key_u: 
             vertex_u = nodo['key']
+            break 
             
     if vertex_u == None:
-        raise Exception("El vertice u no existe")
+        raise Exception("El vertice u no existe") 
     
     for nodo in lista_de_adyacencia_info:
-        if nodo['key'] == key_v:
+        if nodo is not None and nodo['key'] == key_v: 
             vertex_v = nodo['key']
+            break 
             
     if vertex_v == None: 
-        raise Exception("El vertice v no existe")
+        raise Exception("El vertice v no existe") 
     
     adyacencia_u = None
+    
     for nodo in lista_de_adyacencia:
-        if nodo['key'] == key_u:
-            adyacencia_u = nodo["value"]
+        if nodo is not None and nodo['key'] == key_u: 
+            adyacencia_u = nodo["value"] 
+            break 
 
     arco = edg.new_edge(key_v,weight) 
-    if adyacencia_u != None:   
-        map.put(adyacencia_u,key_v,arco)
     
+    #Esta parte me sirvio para hacer debugging hecha con gemini la verdad pa q digo q no. 
+    # --- MAJOR LOGIC CHANGES START HERE ---
+    if adyacencia_u is not None: # Changed from '!= None' to 'is not None' (Pythonic)
+        # 1. Call map.put on the inner adjacency map (`adyacencia_u`).
+        # This call RETURNS the updated map. If a rehash occurred, it's a NEW map object.
+        updated_adyacencia_u_map_obj = map.put(adyacencia_u, key_v, arco)
+        
+        # 2. Now, take this `updated_adyacencia_u_map_obj` (which might be a new object
+        # if the inner map rehashed) and put it back into the TOP-LEVEL
+        # `my_graph['adjacency_list']` map for the given `key_u`.
+        # This ensures the main graph's adjacency list always references the correct,
+        # up-to-date inner map for vertex `key_u`.
+        # The `map.put` on the top-level map also handles its own potential rehash.
+        my_graph['adjacency_list'] = map.put(my_graph['adjacency_list'], key_u, updated_adyacencia_u_map_obj)
+    # --- MAJOR LOGIC CHANGES END HERE ---
+
     my_graph['num_edges']+=1
     
     return my_graph
