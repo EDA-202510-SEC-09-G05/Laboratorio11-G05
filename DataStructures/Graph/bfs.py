@@ -1,9 +1,9 @@
-# DataStructures/Graph/bfs.py
+
 
 from DataStructures.Map import map_linear_probing as map
-from DataStructures.List import array_list as lt # For general list operations (e.g., converting map.key_set)
-from DataStructures.Graph import no_digraph as g # BFS is for non-directed graph, like DFS
-from DataStructures.Queue import queue as Q # User's specified queue module
+from DataStructures.List import array_list as lt 
+from DataStructures.Graph import no_digraph as g 
+from DataStructures.Queue import queue as Q 
 
 
 
@@ -70,7 +70,7 @@ def bfs(my_graph, source):
 
             
 
-    return search_data # Return the complete search data (visited map and source)
+    return search_data 
 
 
 # --- Helper functions to query BFS results ---
