@@ -41,7 +41,16 @@ y = stk.push(x,'Pablo')
 y = stk.push(x,'Martin')
 
 
-print(f)
+print("Esta es la lista de valores de este grafo",'\n')
+print(c['vertices'],'\n')
+print("Y esta son las llaves")
+print(mp.key_set(c['vertices']),'\n')
+print('Y estos son los valores asociados a cada llave')
+print(mp.value_set(c['vertices']),'\n')
+
+print("Y estas son las adjacencias que tiene por ejemplo Pablo",'\n')
+print(g.adjacents(c,'Pablo'))
+
 
 
 
