@@ -1,31 +1,51 @@
+# DataStructures/Map/map_linear_probing.py
+
 from DataStructures.Map import map_functions as mp
 import random as rd
 from DataStructures.List import array_list as lt
 from DataStructures.Map import map_entry as me
 
-# --- Internal Helper Function (NEW) ---
-# Esta función realiza la inserción o actualización sin disparar un rehash.
-# Es llamada por 'put' y 'rehash'.
-def _put_internal(my_map, key, value):
-    hash_val = mp.hash_value(my_map, key)
+def _put_internal_logic(my_map, key, value):
+    initial_hash = (my_map['scale'] * hash(key) + my_map['shift']) % my_map['prime']
+    index = initial_hash % my_map['capacity']
+
+    found_deleted_slot = -1
     
-    # 'find_slot' ahora devuelve si la clave fue encontrada y la posición.
-    key_already_exists, pos = find_slot(my_map, key, hash_val)
+    probes = 0
+    while probes < my_map['capacity']: 
+        entry = my_map['table']['elements'][index]
 
-    if not key_already_exists:
-        # Es una nueva inserción
-        my_map['table']['elements'][pos] = me.new_map_entry(key, value)
-        my_map['size'] += 1 # Incrementar el tamaño solo para nuevas claves
-    else:
-        # La clave ya existe, solo actualizamos su valor
-        my_map['table']['elements'][pos] = me.new_map_entry(key, value)
+        if entry is None:
+            if found_deleted_slot != -1:
+                index = found_deleted_slot
+            
+            my_map['table']['elements'][index] = me.new_map_entry(key, value, 'occupied')
+            my_map['size'] += 1
+            return
 
-# --- new_map function (Corregida) ---
+        elif entry['state'] == 'occupied':
+            if entry['key'] == key:
+                my_map['table']['elements'][index]['value'] = value
+                return
+
+        elif entry['state'] == 'deleted':
+            if found_deleted_slot == -1:
+                found_deleted_slot = index
+            # Continue probing, the key might be further down
+        
+        index = (index + 1) % my_map['capacity']
+        probes += 1
+    
+    if found_deleted_slot != -1:
+        my_map['table']['elements'][found_deleted_slot] = me.new_map_entry(key, value, 'occupied')
+        my_map['size'] += 1
+        return
+
+    raise Exception("Map is full or probing failed to find a slot!")
+
+
 def new_map(num_elements, load_factor, prime=109345121):
-    # Calcula la capacidad inicial como el siguiente primo más grande
-    # que el número de elementos esperados dividido por el factor de carga.
-    # Esto asegura que la tabla inicie con un tamaño adecuado.
-    capacity = mp.next_prime(int(num_elements / load_factor)) # Usar int para la división entera
+    capacity = mp.next_prime(int(num_elements / load_factor))
     scale = rd.randint(1, prime - 1)
     shift = rd.randint(0, prime - 1)
     
@@ -34,209 +54,140 @@ def new_map(num_elements, load_factor, prime=109345121):
         "capacity": capacity,
         "scale": scale,
         "shift": shift,
-        "table": lt.new_list(), # Inicializa la estructura del array_list
+        "table": lt.new_list(),
         "current_factor": 0,
         "limit_factor": load_factor,
-        'size': 0, # El tamaño inicial de elementos en el mapa
+        'size': 0,
         'type': 'PROBE_HASH_MAP'
     }
     
-    # OPTIMIZACIÓN: Inicializar directamente la lista interna del array_list.
-    # Esto evita el comportamiento O(N^2) si lt.add_last es ineficiente por reasignaciones.
-    # Asume que 'lt.new_list()' retorna un diccionario con la clave 'elements'.
-    hash_table['table']['elements'] = [me.new_map_entry(None, None) for _ in range(capacity)]
-    hash_table['table']['size'] = capacity # Actualiza el tamaño de la lista interna del array_list
-    
-    # Los valores de 'scale' y 'shift' no deberían ser reiniciados a 1 y 0
-    # si se usan para la función de hash universal. Los mantendremos aleatorios.
-    # hash_table['scale'] = 1
-    # hash_table['shift'] = 0
-    
+    hash_table['table']['elements'] = [None] * capacity
+    hash_table['table']['size'] = capacity
+
     return hash_table
 
-# --- put function (Corregida) ---
 def put(my_map, key, value):
-    # Utilizamos la función auxiliar interna para manejar la lógica de inserción/actualización.
-    _put_internal(my_map, key, value)
-    
-    # Paso 4: Actualizar el current factor.
+    if my_map['size'] / my_map['capacity'] >= my_map['limit_factor']:
+        my_map = rehash(my_map)
+
+    _put_internal_logic(my_map, key, value)
+
     my_map['current_factor'] = my_map['size'] / my_map['capacity']
-    
-    # Paso 5: Verificar si es necesario hacer un rehash (solo después de la inserción).
-    if my_map['current_factor'] > my_map["limit_factor"]:
-        my_map = rehash(my_map) # 'rehash' devuelve un nuevo mapa.
     
     return my_map
 
-# --- find_slot function (Corregida) ---
 def find_slot(my_map, key, hash_value):
-   first_avail = None # Almacena la primera ranura disponible (None o "__EMPTY__")
-   current_pos = hash_value # Posición actual en la búsqueda
-   probes = 0 # Contador para evitar bucles infinitos en tablas llenas
-
-   while probes < my_map["capacity"]: # Limita la búsqueda a la capacidad total de la tabla
+   first_avail = None
+   current_pos = hash_value
+   probes = 0
+   while probes < my_map["capacity"]:
       entry = lt.get_element(my_map["table"], current_pos)
       
-      # Caso 1: Encontramos la clave buscada
-      if me.get_key(entry) == key:
-            return True, current_pos # Retorna (clave_encontrada=True, posicion_de_la_clave)
-      
-      # Caso 2: Ranura vacía (clave None)
-      if me.get_key(entry) is None:
+      if entry is None:
             if first_avail is None:
-               first_avail = current_pos # Esta es la mejor posición para insertar si la clave no se encuentra
-            # Si encontramos un None y la clave no ha sido encontrada,
-            # significa que la clave no está en la tabla (no hay más sondeo necesario para la búsqueda).
-            return False, first_avail # Retorna (clave_encontrada=False, mejor_posicion_para_insertar)
+               first_avail = current_pos
+            return False, first_avail 
       
-      # Caso 3: Ranura marcada como vacía por borrado ("__EMPTY__" / tumba)
-      if me.get_key(entry) == "__EMPTY__":
+      if entry['state'] == 'occupied':
+            if entry['key'] == key:
+                return True, current_pos
+      elif entry['state'] == 'deleted':
             if first_avail is None:
-               first_avail = current_pos # Esta ranura es utilizable para una nueva inserción
-            # Continuamos sondeando, porque la clave podría estar más adelante
-            # en la secuencia de sondeo (debido a colisiones previas).
+               first_avail = current_pos
       
-      # Mover a la siguiente ranura en la secuencia de sondeo lineal
       current_pos = (current_pos + 1) % my_map["capacity"]
-      probes += 1 # Incrementar el contador de sondeos
+      probes += 1
       
-   # Si el bucle termina, significa que hemos sondeado toda la tabla (o la tabla está llena).
-   # Si no se encontró la clave, devolvemos 'False' y la primera ranura disponible encontrada (si hubo).
-   # Si 'first_avail' sigue siendo None, la tabla está completamente llena sin ranuras disponibles.
-   return False, first_avail if first_avail is not None else -1 # -1 podría indicar tabla llena o sin slot disponible
+   return False, first_avail if first_avail is not None else -1
 
-# --- is_available function (Se mantiene igual, funciona bien) ---
-def is_available(table, pos):
-   entry = lt.get_element(table, pos)
-   if me.get_key(entry) is None or me.get_key(entry) == "__EMPTY__":
-      return True
-   return False
-
-# --- default_compare function (Se mantiene igual, funciona bien) ---
-def default_compare(key, entry):
-    # Asume que entry es el objeto devuelto por me.new_map_entry
-    entry_key = me.get_key(entry)
-    if key == entry_key:
-      return 0
-    elif key > entry_key: # Asume que las claves son comparables
-      return 1
-    return -1
-
-# --- contains function (Corregida para usar get) ---
-def contains(my_map, key):
-    # Utiliza la función 'get' para verificar si la clave existe.
-    return get(my_map, key) is not None
-
-# --- get function (Corregida con un ligero ajuste) ---
 def get(my_map, key):
-    hash_value = mp.hash_value(my_map, key)
-    capacity = my_map["capacity"]
-    current_pos = hash_value # Usar una variable para la posición actual
-    probes = 0 # Contador para evitar bucles infinitos
-    
-    while probes < capacity: # Limitar la búsqueda a la capacidad total
-        entry = lt.get_element(my_map["table"], current_pos)
-        
-        # Caso 1: Encontramos la clave
-        if me.get_key(entry) == key:
-            return me.get_value(entry)
-        
-        # Caso 2: Ranura vacía (clave None)
-        # Si encontramos un slot None, la clave no puede estar más adelante en esta secuencia.
-        if me.get_key(entry) is None:
-            return None
-            
-        # Caso 3: Ranura es una tumba ("__EMPTY__")
-        # Continuamos sondeando, porque la clave podría estar más adelante.
-        # No necesitamos un 'elif' explícito aquí, el flujo continúa si no es None o la clave.
-        
-        # Linear probing: siguiente slot
-        current_pos = (current_pos + 1) % capacity
-        probes += 1
-        
-    # Si salimos del bucle, significa que la clave no se encontró después de sondear toda la tabla.
-    return None
-    
-# --- remove function (Corregida con Lazy Deletion/Tombstones) ---
-def remove(my_map, key):
-    # Utiliza la lógica de sondeo para encontrar la clave.
-    # No podemos usar 'find_slot' directamente porque necesitamos la posición de la clave, no una de inserción.
-    
-    hash_value = mp.hash_value(my_map, key)
-    current_pos = hash_value
+    hash_value = (my_map['scale'] * hash(key) + my_map['shift']) % my_map['prime']
+    index = hash_value % my_map['capacity']
     probes = 0
     
-    while probes < my_map["capacity"]:
-        entry = lt.get_element(my_map["table"], current_pos)
+    while probes < my_map['capacity']:
+        entry = my_map['table']['elements'][index]
         
-        if me.get_key(entry) == key:
-            # Clave encontrada: Marcar como eliminada (tumba)
-            my_map['table']['elements'][current_pos] = me.new_map_entry("__EMPTY__", None)
-            my_map['size'] -= 1 # Decrementar el tamaño del mapa
-            return my_map
+        if entry is None:
+            return None
         
-        if me.get_key(entry) is None:
-            # Encontramos un slot None, la clave no está en la tabla
-            return my_map # La clave no existe en el mapa
-            
-        current_pos = (current_pos + 1) % my_map["capacity"]
+        if entry['state'] == 'occupied' and entry['key'] == key:
+            return entry['value']
+        
+        index = (index + 1) % my_map['capacity']
         probes += 1
         
-    return my_map # Clave no encontrada después de sondear toda la tabla
+    return None
 
-# --- size function (Se mantiene igual, funciona bien) ---
+def remove(my_map, key):
+    hash_value = (my_map['scale'] * hash(key) + my_map['shift']) % my_map['prime']
+    index = hash_value % my_map['capacity']
+    probes = 0
+    
+    while probes < my_map['capacity']:
+        entry = my_map['table']['elements'][index]
+        
+        if entry is None:
+            return my_map
+        
+        if entry['state'] == 'occupied' and entry['key'] == key:
+            my_map['table']['elements'][index]['state'] = 'deleted'
+            my_map['size'] -= 1
+            my_map['current_factor'] = my_map['size'] / my_map['capacity']
+            return my_map
+            
+        index = (index + 1) % my_map['capacity']
+        probes += 1
+        
+    return my_map
+
 def size(my_map):
     return my_map['size']
 
-# --- is_empty function (Se mantiene igual, funciona bien) ---
 def is_empty(my_map):
-    return my_map["size"] == 0
+    return my_map['size'] == 0
 
-# --- key_set function (Corregida ligeramente para robustez) ---
+def contains(my_map, key):
+    return get(my_map, key) is not None
+
 def key_set(my_map):
-    keys = lt.new_list()
-    # Iterar sobre toda la capacidad de la tabla para encontrar todas las claves
-    for i in range(my_map["capacity"]): # Iterar hasta la capacidad
-        current_entry = my_map["table"]["elements"][i]
-        # Asegurarse de que la entrada no es None ni una tumba
-        if current_entry is not None and me.get_key(current_entry) is not None and me.get_key(current_entry) != "__EMPTY__":
-            lt.add_last(keys, me.get_key(current_entry))
-    return keys
-
-# --- value_set function (Corregida ligeramente para robustez) ---
-def value_set(my_map):
-    values = lt.new_list()
-    # Iterar sobre toda la capacidad de la tabla para encontrar todos los valores
-    for i in range(my_map["capacity"]): # Iterar hasta la capacidad
-        current_entry = my_map["table"]["elements"][i]
-        # Asegurarse de que la entrada no es None ni una tumba
-        if current_entry is not None and me.get_key(current_entry) is not None and me.get_key(current_entry) != "__EMPTY__":
-            lt.add_last(values, me.get_value(current_entry))
-    return values
-
-# --- rehash function (Corregida) ---
-def rehash(my_map):
-    # Calcula la nueva capacidad (doble de la actual, y el siguiente primo)
-    new_capacity_val = mp.next_prime(2 * my_map['capacity'])
-    
-    # Crea un nuevo mapa con la nueva capacidad calculada.
-    # 'new_map' calculará la capacidad real basada en 'new_capacity_val' y el factor de carga.
-    nuevo = new_map(new_capacity_val, my_map['limit_factor'])
-    
-    # El tamaño del nuevo mapa se construirá correctamente a medida que insertamos.
-    # NO: nuevo['size'] = my_map['size'] # Esto era un error.
-
-    # Inserta todos los elementos de la tabla vieja en la nueva tabla
-    # Iterar sobre la tabla antigua para encontrar elementos válidos (no None ni tumbas)
+    keys_list = lt.new_list()
     for i in range(my_map['capacity']):
-        entry = lt.get_element(my_map['table'], i)
-        if entry is not None and me.get_key(entry) is not None and me.get_key(entry) != "__EMPTY__":
-            key = me.get_key(entry)
-            value = me.get_value(entry)
-            _put_internal(nuevo, key, value) # Usar la función interna para no disparar otro rehash
+        entry = my_map['table']['elements'][i]
+        if entry is not None and entry['state'] == 'occupied':
+            lt.add_last(keys_list, entry['key'])
+    return keys_list
 
-    # El current_factor del nuevo mapa se actualizará automáticamente con cada _put_internal
-    # o puede ser recalculado aquí una vez que todos los elementos han sido transferidos.
-    # nuevo['current_factor'] = nuevo['size'] / nuevo['capacity'] # Ya se calcula en _put_internal
+def value_set(my_map):
+    values_list = lt.new_list()
+    for i in range(my_map['capacity']):
+        entry = my_map['table']['elements'][i]
+        if entry is not None and entry['state'] == 'occupied':
+            lt.add_last(values_list, entry['value'])
+    return values_list
 
-    return nuevo
+def rehash(my_map):
+    old_capacity = my_map['capacity']
+    old_table_elements = my_map['table']['elements']
+
+    new_capacity_val = mp.next_prime(2 * old_capacity)
+    
+    new_map_obj = new_map(new_capacity_val, my_map['limit_factor'], my_map['prime'])
+    new_map_obj['scale'] = my_map['scale']
+    new_map_obj['shift'] = my_map['shift']
+
+    for entry in old_table_elements:
+        if entry is not None and entry['state'] == 'occupied':
+            _put_internal_logic(new_map_obj, entry['key'], entry['value'])
+
+    new_map_obj['current_factor'] = new_map_obj['size'] / new_map_obj['capacity']
+
+    return new_map_obj
+
+def default_compare(key, entry):
+    entry_key = entry['key']
+    if key == entry_key:
+      return 0
+    elif key > entry_key:
+      return 1
+    return -1

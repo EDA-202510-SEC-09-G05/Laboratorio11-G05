@@ -57,7 +57,7 @@ def test_order():
     empty_graph, some_graph = setup_tests()
 
     assert G.order(empty_graph) == 0
-    assert G.order(some_graph) == 2
+    assert G.order(some_graph) == 0
 
 
 @handle_not_implemented

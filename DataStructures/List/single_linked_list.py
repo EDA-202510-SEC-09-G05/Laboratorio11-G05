@@ -344,5 +344,20 @@ def partition(my_list,lo,hi,sort_crit):
     return atras 
         
         
+def is_empty(my_list):
+    """
+    Checks if the single linked list is empty.
+    Returns True if the list is empty, False otherwise.
+    """
+    return my_list['size'] == 0
 
-    
+
+def reverse(my_list):
+
+    reversed_list = new_list() 
+    current_node = my_list['first']
+    while current_node is not None:
+        add_first(reversed_list, current_node['info']) 
+        current_node = current_node['next']
+        
+    return reversed_list
