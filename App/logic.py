@@ -31,6 +31,7 @@
 from DataStructures.List import single_linked_list as lt
 from DataStructures.Map import map_linear_probing as m
 from DataStructures.Graph import digraph as G
+from DataStructures.Graph import dijkstra as dijk
 
 import csv
 import time
@@ -127,6 +128,8 @@ def set_station(analyzer, station):
         if vertex is not None:
             # TODO: Llame a la ejecucion de Dijkstra desde la estacion
             # base para calcular los caminos de costo minimo
+            dijk.dijkstra(analyzer['connections'],station)
+            
             return True
         else:
             return False

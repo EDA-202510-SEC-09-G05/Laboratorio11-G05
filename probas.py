@@ -3,6 +3,10 @@ from DataStructures.List import array_list as lt
 from DataStructures.Graph import vertex as ver
 import math 
 from DataStructures.Graph import edge as edg
+from DataStructures.Priority_queue import priority_queue as pq
+from DataStructures.Graph import digraph as g
+from DataStructures.Graph import dijkstra as dijks
+
 
 
 def new_graph (order, directed=False):
@@ -106,27 +110,20 @@ def add_edge (my_graph,key_u, key_v, weight):
 a = new_graph(6)
 
 
-a = insert_vertex(a,1, {"name": "D"})
-b = insert_vertex(a,2, {"name": "Sofia"})
-b = insert_vertex(a,3, {"name": "Pablo "})
-b = insert_vertex(a,4, {"name": "I"})
-b = insert_vertex(a,5, {"name": "Y"})
-b = insert_vertex(a,6, {"name": "T"})
-c = update_vertex_info(a,2,'a')
-d = add_edge(a,1,2,2.0)
-d = add_edge(a,1,2,4.0) 
-d = add_edge(a,1,3,9.0)
-d = add_edge(a,1,4,2.0)
-d = add_edge(a,1,4,2.0)
-d = add_edge(a,2,4,2.0)
-d = add_edge(a,2,3,2.0)
-d = add_edge(a,4,3,2.0)
 
-lista = map.get(d['adjacency_list'],4)
-nodod_adyacentes_1 = map.key_set(lista)
-print(lista['table']['elements'])
-print(nodod_adyacentes_1)
+#d = add_edge(a,1,2,4.0) 
+#d = add_edge(a,1,3,9.0)
+#d = add_edge(a,1,4,2.0)
+#d = add_edge(a,1,4,2.0)
+#d = add_edge(a,2,4,2.0)
+#d = add_edge(a,2,3,2.0)
+#d = add_edge(a,4,3,2.0)
 
+#lista = map.get(d['adjacency_list'],4)
+#nodod_adyacentes_1 = map.key_set(lista)
+#print(lista['table']['elements'])
+#print(nodod_adyacentes_1)
+#print(d)
 '''
 print("\n--- After all add_edge calls ---")
 # Get the adjacency map for vertex 1
@@ -209,3 +206,66 @@ def degree(my_graph,key_u):
 z = degree(some_graph,1)
 #print(z)
 
+
+def get_vertex(my_graph,key_u):
+    lista_adyacencia = my_graph['vertices']['table']['elements']
+    for nodo in lista_adyacencia:
+        if nodo["key"] == key_u:
+            return nodo
+
+    raise Exception("El vertice no existe")
+
+#m = get_vertex(d,1)
+#print('\n'*2, m)
+
+
+def new_dijsktra_structure(source, g_order):
+    """
+
+    Crea una estructura de busqueda usada en el algoritmo **dijsktra**.
+
+    Se crea una estructura de busqueda con los siguientes atributos:
+
+    - **source**: Vertice de origen. Se inicializa en ``source``
+    - **visited**: Mapa con los vertices visitados. Se inicializa en ``None``
+    - **pq**: Cola indexada con los vertices visitados. Se inicializa en ``None``
+
+    :returns: Estructura de busqueda
+    :rtype: dijsktra_search
+    """
+    structure = {
+        "source": source,
+        "visited": map.new_map(
+            g_order, 0.5),
+        "pq": pq.new_heap()}
+    
+    
+    
+    g_order = g.order(source)
+    structure['edge_to'] = map.new_map(num_elements=g_order, load_factor=0.5)
+    structure['dist_to'] = map.new_map(num_elements= g_order, load_factor=0.5)
+    structure['marked'] = map.new_map(num_elements= g_order, load_factor=0.5)
+    vertices = g.vertices(source)
+    for i in range(lt.size(vertices)):
+        vert = lt.get_element(vertices, i)
+    map.put(structure['dist_to'], vert, float('inf'))
+    map.put(structure['marked'], vert, False)
+    structure['pq'] = pq.new_heap(is_min_pq=True)
+    
+    
+    
+    return structure
+
+a = insert_vertex(a,1, {"name": "D"})
+b = insert_vertex(a,2, {"name": "Sofia"})
+b = insert_vertex(a,3, {"name": "Pablo "})
+b = insert_vertex(a,4, {"name": "I"})
+b = insert_vertex(a,5, {"name": "Y"})
+b = insert_vertex(a,6, {"name": "T"})
+c = update_vertex_info(a,2,'a')
+d = add_edge(a,1,2,2.0)
+
+r = dijks.dijkstra(d,1)
+
+ml = dijks.has_path_to(2,r)
+print(r)

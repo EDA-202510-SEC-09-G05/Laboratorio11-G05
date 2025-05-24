@@ -1,21 +1,28 @@
 from DataStructures.List import array_list as lt
-from DataStructures.Priority_queue import index_pq_entry as pq
+from DataStructures.Priority_queue import index_pq_entry as pq 
 
 def new_heap (is_min_pq = True):
-    
+    """
+    Crea una nueva estructura de heap (cola de prioridad).
+    :param is_min_pq: True para un min-heap (menor prioridad primero), False para un max-heap.
+    :returns: Un diccionario que representa el heap.
+    """
     queue = {
         'elements': lt.new_list(),
         'size': 0,
         'cmp_function': default_compare_lower_value if is_min_pq else default_compare_higher_value
     }
    
-    lt.add_last(queue['elements'], None)
+    # El índice 0 se deja vacío en los heaps basados en arrays para simplificar cálculos de padres/hijos.
+    lt.add_last(queue['elements'], None) 
     return queue
 
 def default_compare_lower_value (father_node, child_node):
-    
-    f = pq.get_key(father_node) 
-    
+    """
+    Función de comparación para un min-heap.
+    Retorna True si el padre tiene menor o igual prioridad que el hijo.
+    """
+    f = pq.get_key(father_node) # Asume que pq.get_key obtiene la prioridad
     c = pq.get_key(child_node)
     
     if f <= c:
@@ -25,9 +32,11 @@ def default_compare_lower_value (father_node, child_node):
 
 
 def default_compare_higher_value (father_node, child_node):
-    
-    f = pq.get_key(father_node) 
-    
+    """
+    Función de comparación para un max-heap.
+    Retorna True si el padre tiene mayor o igual prioridad que el hijo.
+    """
+    f = pq.get_key(father_node) # Asume que pq.get_key obtiene la prioridad
     c = pq.get_key(child_node)
 
     if f >= c:
@@ -37,18 +46,25 @@ def default_compare_higher_value (father_node, child_node):
     
 
 def priority (my_heap, parent, child):
-    
+    """
+    Compara la prioridad de dos nodos según la función de comparación del heap.
+    """
     cmp_function = my_heap['cmp_function']
     
-    if cmp_function == default_compare_lower_value:
-        return cmp_function(parent, child)
-    else:
-        return cmp_function(child, parent)
+    # Para min-heap, compara padre con hijo. Para max-heap, la función de comparación
+    # ya está invertida (mayor >= menor), así que la llamada es directa.
+    return cmp_function(parent, child)
     
-def insert (my_heap, value, key):
-    
+def put (my_heap, priority_value, item_value): # RENAMED: 'insert' to 'put'
+    """
+    Inserta un nuevo elemento en el heap con su prioridad.
+    :param my_heap: El heap.
+    :param priority_value: El valor de prioridad del elemento.
+    :param item_value: El elemento a insertar.
+    """
     # Añadimos el nuevo elemento al final de la lista
-    lt.add_last(my_heap['elements'], pq.new_pq_entry(key, value))
+    # pq.new_pq_entry(key, value) -> assuming key is priority, value is item
+    lt.add_last(my_heap['elements'], pq.new_pq_entry(priority_value, item_value)) 
     
     # Aumentamos el tamaño del heap
     my_heap['size'] += 1
@@ -61,11 +77,10 @@ def insert (my_heap, value, key):
 
 def swim(my_heap: dict, pos: int):
     """
-    Sube el elemento en 'pos' hasta restaurar la propiedad del heap,
-    usando priority() y sin break.
+    Sube el elemento en 'pos' hasta restaurar la propiedad del heap.
     """
     elems = my_heap['elements']
-    # Mientras no estemos en la raíz y el padre NO mantenga la prioridad:
+    # Mientras no estemos en la raíz (pos > 1) y el padre NO mantenga la prioridad frente al hijo:
     while pos > 1 and not priority(
         my_heap,
         lt.get_element(elems, pos // 2),  # padre
@@ -77,89 +92,92 @@ def swim(my_heap: dict, pos: int):
         pos //= 2
 
 def size (my_heap):
-    
+    """
+    Retorna el número de elementos en el heap.
+    """
     return my_heap['size']
 
 def is_empty (my_heap):
-    
-    if my_heap['size'] == 0:
-        return True 
-    else:
-        return False
+    """
+    Verifica si el heap está vacío.
+    """
+    return my_heap['size'] == 0
     
 def get_first_priority (my_heap):
-    
-    cmp_function = my_heap['cmp_function']
-    
+    """
+    Retorna la prioridad del primer elemento (raíz) sin eliminarlo.
+    """
     if my_heap['size'] > 0:
-        if cmp_function == default_compare_lower_value:
-            a = my_heap['elements']['elements']
-            return a[1]['index']
-        else:
-            a = my_heap['elements']['elements']
-            return a[my_heap['size']]['index']
+        # Para min-heap, es la raíz (índice 1). Para max-heap, también es la raíz.
+        # Asume que pq.get_key obtiene la prioridad.
+        return pq.get_key(lt.get_element(my_heap['elements'], 1))
+    return None # Retorna None si el heap está vacío
         
-        
+def del_min (my_heap): # RENAMED: 'remove' to 'del_min'
+    """
+    Elimina y retorna el elemento de mayor prioridad (raíz) del heap.
+    :returns: Una tupla (priority_value, item_value) del elemento eliminado.
+              Retorna (None, None) si el heap está vacío.
+    """
+    if my_heap['size'] == 0:
+        return None, None # Retorna (None, None) si el heap está vacío
 
-def remove (my_heap):
+    # Guardamos el primer elemento (raíz)
+    first_entry = lt.get_element(my_heap['elements'], 1)
+    
+    # Extraemos la prioridad y el valor del elemento
+    priority_value = pq.get_key(first_entry)   # Asume que pq.get_key obtiene la prioridad
+    item_value = pq.get_index(first_entry)     # Asume que pq.get_value obtiene el valor del elemento
 
-    if my_heap['size'] > 0:
-        # guardamos el primer elemento
-        a = lt.get_element(my_heap['elements'], 1)
-        first = a['index']
+    # Intercambiamos el primer elemento con el último
+    lt.exchange(my_heap['elements'], 1, my_heap['size'])
     
-        # intercambiamos el primero con el último
-        lt.exchange(my_heap['elements'], 1, my_heap['size'])
+    # Eliminamos el último elemento (que ahora es el original 'first_entry')
+    lt.remove_last(my_heap['elements'])
     
-        # eliminamos el último (que es el primero)
-        lt.remove_last(my_heap['elements'])
+    # Disminuimos el tamaño del heap
+    my_heap['size'] -= 1
     
-        # disminuimos el tamaño del heap
-        my_heap['size'] -= 1
-    
-        # restauramos la propiedad de heap
+    # Restauramos la propiedad de heap hundiendo el nuevo elemento en la raíz
+    if my_heap['size'] > 0: # Solo si quedan elementos
         sink(my_heap, 1)
-    else: 
-        first = None
-
-    
-    return first
+        
+    return (priority_value, item_value) # Retorna la tupla (prioridad, valor)
 
 def sink(my_heap: dict, pos: int):
-    
+    """
+    Baja el elemento en 'pos' hasta restaurar la propiedad del heap.
+    """
     elems = my_heap['elements']
     size  = my_heap['size']
 
-    # índice del hijo izquierdo
+    # Índice del hijo izquierdo
     left = 2 * pos
 
-    # mientras haya al menos hijo izquierdo
+    # Mientras haya al menos hijo izquierdo
     while left <= size:
         right = left + 1
 
-        # elegimos el hijo favorito: aquel que el padre debe comparar primero
+        # Elegimos el hijo favorito: aquel que el padre debe comparar primero
         # (para min-heap: el menor; para max-heap: el mayor)
-        if right <= size and not priority(
+        fav = left # Asumimos inicialmente que el hijo izquierdo es el favorito
+        if right <= size and not priority( # Si hay hijo derecho y el hijo izquierdo NO tiene prioridad sobre el derecho
             my_heap,
             lt.get_element(elems, left),   # tratamos hijo izq como "padre"
             lt.get_element(elems, right)   # y derecho como "hijo"
         ):
-            fav = right
-        else:
-            fav = left
+            fav = right # Entonces el hijo derecho es el favorito
 
-        # si el nodo en pos ya mantiene prioridad frente a fav,
-        # forzamos la salida ajustando left por fuera de rango
+        # Si el nodo en pos ya mantiene prioridad frente a su hijo favorito,
+        # la propiedad de heap se cumple, salimos del bucle.
         if priority(
             my_heap,
             lt.get_element(elems, pos),     # padre
             lt.get_element(elems, fav)      # hijo favorito
         ):
-            left = size + 1
+            break # Salimos del bucle
         else:
-            # si no la mantiene, intercambiamos y seguimos bajando
+            # Si no la mantiene, intercambiamos y seguimos bajando
             lt.exchange(elems, pos, fav)
             pos  = fav
-            left = 2 * pos
-
-   
+            left = 2 * pos # Actualizamos el índice del hijo izquierdo para la siguiente iteración

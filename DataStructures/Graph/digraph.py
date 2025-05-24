@@ -126,3 +126,32 @@ def degree(my_graph,key_u):
     numero = lista_adyacencia_u['adjacents']['size']     
     return numero
 
+def get_vertex(my_graph,key_u):
+    lista_adyacencia = my_graph['vertices']['table']['elements']
+    for nodo in lista_adyacencia:
+        if nodo["key"] == key_u:
+            return nodo
+
+    raise Exception("El vertice no existe")
+   
+
+def get_vertex_info(my_graph, key_u):
+    """
+    Retorna la información (value) asociada a un vértice.
+    Esto es útil para obtener los datos que almacenaste con insert_vertex.
+    """
+    vertex_info = map.get(my_graph['vertices'], key_u)
+    if vertex_info is None:
+        raise Exception(f"El vertice con clave {key_u} no existe.")
+    return vertex_info # This is the 'value' stored in the map entry
+
+
+def get_adjacencies(my_graph, vertex_key):
+    """
+    Retorna la lista de adyacencia (un mapa) para un vértice dado.
+    Este mapa contiene las aristas salientes del vértice.
+    """
+    adj_map = map.get(my_graph['adjacency_list'], vertex_key)
+    if adj_map is None:
+        raise Exception(f"La lista de adyacencia para el vertice {vertex_key} no fue encontrada.")
+    return adj_map
