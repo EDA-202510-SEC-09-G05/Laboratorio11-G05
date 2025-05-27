@@ -36,9 +36,12 @@ def add_first(my_list, element):
 
 
 def add_last(my_list, element):
+
+
     my_list['elements'].append(element)
     my_list['size'] += 1
-    return my_list
+
+    return my_list # This function modifies my_list in place and returns it.
 
 
 
@@ -63,8 +66,17 @@ def remove_first(my_list):
     return element
     
 def remove_last(my_list):
-    element = my_list['elements'][-1]
-    my_list['size'] -= 1
+    """
+    Removes and returns the last element from the list.
+    """
+    if my_list['size'] == 0: # Check if list is empty
+        raise Exception('EmptyStructureError: array_list is empty') # Consistent error for empty list
+    
+    element = my_list['elements'].pop() # <--- CRITICAL FIX: Use Python's list.pop() to remove and return the last element
+    # Python's list.pop() already removes the element from the list.
+    
+    my_list['size'] -= 1 # Decrement logical size
+    
     return element
         
 def insert_element(my_list, element, pos):

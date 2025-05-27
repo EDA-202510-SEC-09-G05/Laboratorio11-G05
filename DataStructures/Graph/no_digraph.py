@@ -98,19 +98,42 @@ def degree(my_graph,key_u):
 
 
 def get_adjacents(my_graph, vertex_key):
+    """
+    Returns the adjacency list (a map) for a given vertex.
+    This map contains the outgoing edges (neighbor_key -> edge_object).
+    Returns None if the vertex_key does not exist.
+    Returns an empty map if the vertex exists but has no outgoing edges.
+    """
+    # First, check if the vertex_key exists in the graph's main vertices map
+    if map.get(my_graph['vertices'], vertex_key) is None:
+        return None # Vertex does not exist, so no adjacency map for it
+
+    # Get the adjacency map for this specific vertex
     adj_map = map.get(my_graph['adjacency_list'], vertex_key)
-    if adj_map is None:
-        return lt.new_list()
-    result_keys = map.key_set(adj_map)
     
-    return result_keys
-
-
-def adjacents(my_graph, vertex_key):
-    adj_map = map.get(my_graph['adjacency_list'], vertex_key)
+    # If the adjacency map hasn't been initialized yet for this vertex (unlikely with insert_vertex)
     if adj_map is None:
-        return lt.new_list()
-    return map.key_set(adj_map)
+        # It's an existing vertex with no edges yet. Return an empty map.
+        return map.new_map(1, 0.5) # <--- FIX: Returns a proper map, not an array_list
+    
+    return adj_map # <--- FIX: Returns the actual map object, not its keys
+
+# This function should return an array_list of keys, and is called by DFS/BFS.
+# Its name 'adjacents' implies it returns 'what is adjacent'.
+def adjacents(my_graph, vertex_key):
+    """
+    Returns an array_list containing the *keys* of the vertices adjacent to vertex_key.
+    This is suitable for graph traversal algorithms like DFS/BFS.
+    """
+    # First, get the actual adjacency map using the corrected get_adjacents.
+    # This might return None (if vertex doesn't exist) or an empty map (if no edges).
+    adj_map = get_adjacents(my_graph, vertex_key) 
+    
+    if adj_map is None: # If vertex doesn't exist
+        return lt.new_list() # Return an empty array_list of keys (for non-existent vertex)
+    
+    # If adj_map is a map (could be empty), get its key_set
+    return map.key_set(adj_map) # This correctly returns an array_list of keys
 
 def get_vertex_info(my_graph, key_u):
     return map.get(my_graph['vertices'], key_u)

@@ -31,6 +31,9 @@ c = g.add_edge(a,'Tommy','Sefair', 100)
 c = g.add_edge(a,'Tommy','Botanitas', 10)
 
 
+print(c)
+
+
 d = dfs.dfs(c,'Pablo')
 e = dfs.hasPathTo(d,"Botanitas")
 f = dfs.pathTo(d,"Sefair")
@@ -50,9 +53,6 @@ print(mp.value_set(c['vertices']),'\n')
 
 print("Y estas son las adjacencias que tiene por ejemplo Pablo",'\n')
 print(g.adjacents(c,'Pablo'))
-
-
-
 
 
 

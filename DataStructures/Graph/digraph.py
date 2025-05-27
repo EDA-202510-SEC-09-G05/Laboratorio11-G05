@@ -152,7 +152,6 @@ def adjacents(my_graph, vertex_key):
     """
     adj_map = map.get(my_graph['adjacency_list'], vertex_key)
     if adj_map is None:
-        # If the vertex key doesn't exist or has no outgoing edges, return an empty array_list.
         return lt.new_list()
 
     return map.key_set(adj_map)
